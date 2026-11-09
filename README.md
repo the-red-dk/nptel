@@ -16,6 +16,8 @@ Next.js App Router, TypeScript, Tailwind CSS, PostgreSQL, Prisma, Zod, Recharts,
 
 The dev launcher gives each requested port a separate `.next-dev-<port>` output folder. If another instance is already using port 3000, start this one with `npm run dev -- --port 3001`; stop an older instance with Ctrl+C before reusing its port.
 
+If using Prisma's local development database, add `pgbouncer=true` to the printed `DATABASE_URL` query parameters. This avoids prepared-statement collisions on its local connection proxy.
+
 ## Docker Compose
 
 Copy `.env.compose.example` to `.env.compose`, replace both passwords, then run `docker compose --env-file .env.compose up --build`. Compose starts PostgreSQL, applies the schema, seeds the starter course list, and serves the app at the configured `APP_PORT` (3000 by default). To stop it, run `docker compose --env-file .env.compose down`; add `-v` only if you intend to remove the database volume and its data.
