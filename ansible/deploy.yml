@@ -1,0 +1,52 @@
+---
+- name: Deploy NPTELBoard with Docker Compose
+  hosts: nptelboard
+  become: true
+  vars:
+    app_directory: /opt/nptelboard
+  tasks:
+    - name: Require deployment secrets
+      ansible.builtin.assert:
+        that:
+          - nptelboard_postgres_password is defined
+          - nptelboard_admin_password is defined
+          - nptelboard_repo is defined
+        fail_msg: Pass the Git repository and secrets with Ansible Vault or --extra-vars; do not store secrets in this repository.
+
+    - name: Install Docker and Git
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose-v2
+          - git
+        state: present
+        update_cache: true
+
+    - name: Start Docker
+      ansible.builtin.service:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Checkout application
+      ansible.builtin.git:
+        repo: "{{ nptelboard_repo }}"
+        dest: "{{ app_directory }}"
+        version: "{{ nptelboard_version | default('main') }}"
+        update: true
+
+    - name: Configure private environment
+      ansible.builtin.template:
+        src: .env.j2
+        dest: "{{ app_directory }}/.env"
+        owner: root
+        group: root
+        mode: "0600"
+      no_log: true
+
+    - name: Build and start application stack
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_directory }}"
+        state: present
+        build: always
+        pull: always

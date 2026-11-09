@@ -1,0 +1,2 @@
+[nptelboard]
+app-server.example.com ansible_user=ubuntu

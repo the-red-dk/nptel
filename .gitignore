@@ -1,8 +1,11 @@
 node_modules
 .next
+.next-dev-*
+.next-verify
 out
 .env*
 !.env.example
 coverage
 playwright-report
 test-results
+*.tsbuildinfo
