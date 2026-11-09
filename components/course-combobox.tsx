@@ -1,0 +1,11 @@
+"use client";
+import { useEffect, useState } from "react";
+type Course = { id: string; name: string; discipline: string; slug: string };
+export function CourseCombobox({ value, onChange }: { value: string; onChange: (id: string, name: string) => void }) {
+  const [query, setQuery] = useState(""), [items, setItems] = useState<Course[]>([]), [open, setOpen] = useState(false), [selected, setSelected] = useState("");
+  useEffect(() => { const t = setTimeout(() => { if (!query.trim()) { setItems([]); return; } fetch(`/api/courses?q=${encodeURIComponent(query)}`).then(r => r.json()).then(setItems).catch(() => setItems([])); }, 250); return () => clearTimeout(t); }, [query]);
+  return <div className="relative"><input role="combobox" aria-expanded={open} aria-controls="course-options" aria-autocomplete="list" value={selected || query} onFocus={() => setOpen(true)} onChange={e => { setSelected(""); onChange("", ""); setQuery(e.target.value); setOpen(true); }} placeholder="Search by course name" className="field" />
+    {open && query && <div id="course-options" role="listbox" className="absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-xl border-2 border-ink bg-white p-2 shadow-card">{items.map(c => <button type="button" role="option" aria-selected={value === c.id} key={c.id} onClick={() => { onChange(c.id, c.name); setSelected(c.name); setQuery(""); setOpen(false); }} className="block w-full rounded-lg px-3 py-2 text-left hover:bg-lime-100"><span className="block font-semibold">{c.name}</span><span className="text-xs text-neutral-500">{c.discipline}</span></button>)}
+      {!items.length && <p className="px-3 py-2 text-sm text-neutral-500">No approved courses found yet.</p>}
+      <button type="button" onClick={async()=>{const discipline=prompt("What discipline is this course in?")||"Other"; const r=await fetch("/api/courses",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:query,discipline})}); if(r.ok){setOpen(false);alert("Course request sent for review.")} }} className="mt-1 w-full border-t border-neutral-200 px-3 py-3 text-left text-sm font-semibold">Can&apos;t find your course? Request to add it ↗</button></div>}</div>;
+}
