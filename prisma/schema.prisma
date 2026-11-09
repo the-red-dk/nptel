@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+enum CourseStatus { APPROVED PENDING }
+enum Session { JAN_APR JUL_OCT }
+enum Purpose { LEARNING CREDITS }
+enum Tier { ELITE SILVER GOLD TOPPER }
+enum DuplicateAction { OVERWRITE ANOTHER }
+model Course {
+  id String @id @default(cuid())
+  slug String @unique
+  name String
+  discipline String
+  institute String?
+  status CourseStatus @default(APPROVED)
+  submissions Submission[]
+  createdAt DateTime @default(now())
+}
+model Submission {
+  id String @id @default(cuid())
+  courseId String
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  year Int
+  session Session?
+  semester Int?
+  purpose Purpose?
+  name String
+  email String
+  assignmentScore Float
+  examScore Float
+  overallPercent Float
+  hasNumericals Boolean
+  passed Boolean
+  tier Tier?
+  attemptNumber Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([email, courseId, attemptNumber])
+  @@index([courseId, year])
+  @@index([email, courseId])
+}
+model Otp {
+  id String @id @default(cuid())
+  email String
+  codeHash String
+  expiresAt DateTime
+  attempts Int @default(0)
+  payload Json
+  duplicateAction DuplicateAction?
+  duplicateId String?
+  lastSentAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  @@index([email, createdAt])
+}
+model CourseRequest {
+  id String @id @default(cuid())
+  name String
+  discipline String
+  institute String?
+  createdAt DateTime @default(now())
+}
