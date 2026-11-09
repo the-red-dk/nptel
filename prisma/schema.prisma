@@ -69,9 +69,17 @@ model Otp {
   payload Json
   duplicateAction DuplicateAction?
   duplicateId String?
+  verifiedAt DateTime?
   lastSentAt DateTime @default(now())
   createdAt DateTime @default(now())
   @@index([email, createdAt])
+}
+model RateLimitBucket {
+  keyHash String @id
+  count Int @default(1)
+  windowExpiresAt DateTime
+  updatedAt DateTime @updatedAt
+  @@index([windowExpiresAt])
 }
 model CourseRequest {
   id String @id @default(cuid())

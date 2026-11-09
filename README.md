@@ -1,50 +1,67 @@
 # NPTELBoard
 
-Student-submitted course results and anonymous aggregate NPTEL course insights. The visual direction takes cues from the supplied editorial marketplace screenshot; the content and branding are original.
+Public course search and anonymous aggregate NPTEL course statistics, with private email-verified result submissions.
 
-## Stack
+## Local development
 
-Next.js App Router, TypeScript, Tailwind CSS, PostgreSQL, Prisma, Zod, Recharts, Radix-compatible UI primitives, and Resend. All pass and score limits are centralized in `lib/config.ts`.
+Requirements: Node.js 22+, npm, and PostgreSQL 14+. Copy `.env.example` to `.env`, set `DATABASE_URL`, then generate separate random secrets for `ADMIN_PASSWORD` and `OTP_SECRET` (each at least 32 bytes). For example, `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Set the secrets locally; do not commit `.env`.
 
-## Local setup
+```sh
+npm ci
+npx prisma generate
+npm run db:push
+npm run db:seed
+npm run dev
+```
 
-1. Install Node.js 20+ and PostgreSQL 14+.
-2. Copy `.env.example` to `.env` and set `DATABASE_URL` and a strong `ADMIN_PASSWORD`.
-3. Run `npm install`.
-4. Run `npx prisma generate`, `npm run db:push`, and `npm run db:seed`.
-5. Run `npm run dev` and open `http://localhost:3000`.
+Open `http://localhost:3000`. For Prisma's local development database, append `pgbouncer=true` to the connection URL. The development OTP is printed to the server console when `RESEND_API_KEY` is not set.
 
-The dev launcher gives each requested port a separate `.next-dev-<port>` output folder. If another instance is already using port 3000, start this one with `npm run dev -- --port 3001`; stop an older instance with Ctrl+C before reusing its port.
+The dev launcher uses a separate `.next-dev-<port>` directory for each server. Stop an existing process with Ctrl+C before restarting on its port; `npm run dev -- --port 3001` starts on 3001.
 
-If using Prisma's local development database, add `pgbouncer=true` to the printed `DATABASE_URL` query parameters. This avoids prepared-statement collisions on its local connection proxy.
+## Production configuration
+
+Use a shared PostgreSQL service (such as Supabase or a managed PostgreSQL provider) so every visitor and app instance sees the same submissions. Set these environment variables in the host:
+
+- `DATABASE_URL`: production PostgreSQL connection string. Use the provider's transaction-pooling URL with `pgbouncer=true` if required by the provider.
+- `ADMIN_PASSWORD`: a unique random secret of at least 32 bytes.
+- `OTP_SECRET`: a different unique random secret of at least 32 bytes. This HMAC-protects OTPs and distributed rate-limit keys.
+- `RESEND_API_KEY` and `EMAIL_FROM`: Resend credentials and a verified sender address.
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`: Cloudflare Turnstile keys. The site key is build-time for Docker/Next.js and the secret key is server-only.
+- `NEXT_PUBLIC_SITE_URL`: the exact public HTTPS origin, such as `https://nptelboard.example.com`.
+
+Production submissions fail closed if Turnstile or email delivery is not configured. Configure HTTPS at the platform or ingress. Production responses include CSP, frame protections, HSTS, and related security headers.
+
+## Database migrations and catalog
+
+`prisma/schema.prisma` defines courses, submissions, email OTP challenges, course requests, and shared rate-limit buckets. Local development can use `npm run db:push`; deployments use committed migrations via `npm run db:migrate:deploy`. The container applies migrations and runs the idempotent seed before starting the app. `data/nptel_courses.csv` is a small starter catalog; replace or bulk-import the full approved catalog before inviting users.
 
 ## Docker Compose
 
-Copy `.env.compose.example` to `.env.compose`, replace both passwords, then run `docker compose --env-file .env.compose up --build`. Compose starts PostgreSQL, applies the schema, seeds the starter course list, and serves the app at the configured `APP_PORT` (3000 by default). To stop it, run `docker compose --env-file .env.compose down`; add `-v` only if you intend to remove the database volume and its data.
+Copy `.env.compose.example` to `.env.compose`. Generate distinct random hex values for the Postgres password, `ADMIN_PASSWORD`, and `OTP_SECRET`; set Resend credentials, a verified `EMAIL_FROM`, the Turnstile site/secret keys, and the public HTTPS URL. Then run:
 
-## CI/CD and deployment examples
+```sh
+docker compose --env-file .env.compose up --build
+```
 
-- `.github/workflows/ci.yml` runs TypeScript, unit tests, and a production build on pushes and pull requests. A push to `main` also publishes a container image to GitHub Container Registry (`ghcr.io`). Enable Actions and package publishing on the GitHub repository first.
-- `Jenkinsfile` defines checkout, install, validation, build, and Docker image stages. The Jenkins agent needs Node.js 20, Docker, and the Workspace Cleanup plugin.
-- `ansible/deploy.yml` installs Docker on an Ubuntu host, checks out the repository, writes secrets from Ansible variables, and deploys using Compose. Copy `ansible/inventory.ini.example`, replace the host and repository placeholders, install the `community.docker` collection, then provide passwords through Ansible Vault or extra vars.
-- `k8s/` includes a PostgreSQL Deployment/PVC/Service and the app Deployment/NodePort Service. Follow `k8s/README.md` to create Kubernetes secrets outside Git and apply the manifests. Replace the example GHCR image name first.
+The app listens on the configured `APP_PORT` (3000 by default). Stop with `docker compose --env-file .env.compose down`. Add `-v` only if you intend to erase the database volume.
 
-These files prepare the project for GitHub, Jenkins, Ansible, and Kubernetes. Actual CI runs and deployment require a GitHub remote, a configured Jenkins agent, an SSH-accessible Docker host, or a Kubernetes cluster respectively.
+## DevOps files
 
-Without `RESEND_API_KEY`, development OTPs are printed to the server console. Configure a Resend API key and a verified `EMAIL_FROM` for email delivery. OTPs are hashed in storage and expire after ten minutes. The development rate limiter is in-memory; use a shared store such as Redis for multi-instance production deployment. Configure Cloudflare Turnstile keys before exposing a public deployment; the current form also uses a honeypot.
+- GitHub Actions (`.github/workflows/ci.yml`) checks types/tests/builds on pull requests and publishes a GHCR image on `main`. Set the repository variable `TURNSTILE_SITE_KEY`; store credentials and deploy-only secrets in GitHub/host secrets.
+- `Jenkinsfile` runs checkout, install, checks, tests, build, and a Docker image build on `main`. Its agent needs Node.js 22, Docker, and the Workspace Cleanup plugin.
+- `ansible/deploy.yml` configures an Ubuntu Docker host and deploys with Compose. Install `community.docker`; provide the repo URL and credentials through Ansible Vault or extra vars.
+- `k8s/` contains PostgreSQL storage/service/deployment and the app deployment/service. Follow `k8s/README.md`; create secrets outside Git and build the image with the Turnstile site key.
 
-## Database and seed
+For a shared public site, the simplest hosted route is Vercel + managed PostgreSQL (for example Supabase). Create the database, run `npm run db:migrate:deploy` against its URL, set the production environment variables above, and connect the GitHub repository to Vercel. Alternatively, the Compose/Ansible/Kubernetes path runs the whole stack on your own host. These are deployment configurations; a public launch still needs a GitHub remote, a configured CI runner, and a host/cluster plus domain. No public deployment has been created from this workspace.
 
-`prisma/schema.prisma` defines courses, submissions, OTP challenges, and course requests. `data/nptel_courses.csv` is an illustrative starter list; replace it with the course catalog you intend to support. The seed upserts by slug and can be rerun safely.
+## NPTEL score bands
 
-## Tests
+For most courses, assignment ≥10/25 and exam ≥30/75 are required to pass. Certificate bands are: below 40% no certificate; 40–59% successfully completed; 60–74% Elite; 75–89% Elite with Silver medal; and 90–100% Elite with Gold medal. Topper is a rank-based stamp (1%, 2%, or 5%), not a fixed score tier. Some courses publish different pass criteria; verify course-specific rules. See the [NPTEL FAQ](https://www.nptel.ac.in/faq), [NPTEL topper criteria](https://archive.nptel.ac.in/content/college_assets/spoc_refdocs/CriteriaandcalculationfortoppersfortheNPTELOnlineCertificationExams.pdf), and an [NPTEL certificate announcement explaining Silver/Gold ranges](https://onlinecourses-archive.nptel.ac.in/noc19_cs28/announcements).
 
-Run `npm test` for the pass threshold and aggregate best-attempt unit tests. Configure `DATABASE_URL` before running database-backed routes. The requested submit-to-OTP end-to-end scenario still needs a local PostgreSQL fixture and a mail capture provider; this repository does not include an automated Playwright test for that full flow.
+## Security and privacy
 
-## Deployment
+Public endpoints return course aggregates, never individual submissions. Duplicate comparisons are returned only after email OTP verification. OTPs are HMAC-protected, short-lived, limited to five attempts, and resend is throttled. Production IP/email limits are shared through PostgreSQL; local development uses an in-memory limiter. Admin routes require a timing-safe password check and an HTTP-only, Secure-in-production, SameSite cookie; login attempts are throttled. Public POST bodies are size-limited. Names and emails are not selected by public pages; admin moderation returns names but not emails.
 
-Deploy the Next.js app to Vercel and provision PostgreSQL (for example, Supabase). Set `DATABASE_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `ADMIN_PASSWORD`, and Turnstile site/secret keys in the deployment environment. Run Prisma generation and apply the schema before launch, then import the production catalog. For production, replace process-local throttling with a shared store and require Turnstile verification in the submission endpoint.
+## Checks
 
-## Privacy notes
-
-Public course pages return aggregate calculations only; names and emails are not selected for public views. Email is used server-side for duplicate detection and OTP delivery. Admin submissions expose the name to help moderation but do not select the email.
+Run `npx tsc --noEmit`, `npm test`, and `npm audit`. Database-backed verification needs `DATABASE_URL`; a real production submission also needs Resend and Turnstile credentials. The repository does not yet contain a full browser end-to-end test for the email delivery flow.

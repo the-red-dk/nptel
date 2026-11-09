@@ -10,6 +10,10 @@
         that:
           - nptelboard_postgres_password is defined
           - nptelboard_admin_password is defined
+          - nptelboard_otp_secret is defined
+          - nptelboard_turnstile_site_key is defined
+          - nptelboard_turnstile_secret_key is defined
+          - nptelboard_site_url is defined
           - nptelboard_repo is defined
         fail_msg: Pass the Git repository and secrets with Ansible Vault or --extra-vars; do not store secrets in this repository.
 

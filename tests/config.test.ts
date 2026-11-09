@@ -1,5 +1,5 @@
 import { describe,it,expect } from "vitest";
 import { passed,CONFIG } from "@/lib/config";
 import { bestAttempts,aggregate } from "@/lib/analytics";
-describe("pass threshold",()=>{it("uses the centralized threshold",()=>{expect(passed(CONFIG.passPercent)).toBe(true);expect(passed(CONFIG.passPercent-0.01)).toBe(false)})});
+describe("pass threshold",()=>{it("requires both assignment and exam minimums",()=>{expect(passed(10,30)).toBe(true);expect(passed(25,29.99)).toBe(false);expect(passed(9.99,75)).toBe(false)});it("keeps certificate score bands in config",()=>{expect(CONFIG.tierRanges.ELITE).toBe("60–74%");expect(CONFIG.tierRanges.SILVER).toBe("75–89%");expect(CONFIG.tierRanges.GOLD).toBe("90–100%")})});
 describe("best attempt analytics",()=>{it("counts each person once using their highest score",()=>{const rows=[{email:"a",overallPercent:55},{email:"a",overallPercent:82},{email:"b",overallPercent:61}];expect(bestAttempts(rows)).toHaveLength(2);expect(bestAttempts(rows).find(r=>r.email==="a")?.overallPercent).toBe(82)});it("builds score summaries",()=>{const data=aggregate([{year:2025,session:null,semester:1,purpose:"LEARNING",assignmentScore:20,examScore:50,overallPercent:70,hasNumericals:true,passed:true,tier:"GOLD"}]);expect(data.total).toBe(1);expect(data.passRate).toBe(100);expect(data.numericals).toBe(100)})});

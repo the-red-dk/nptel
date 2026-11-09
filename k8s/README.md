@@ -7,9 +7,12 @@ kubectl create secret generic postgres-secrets --from-literal=password='YOUR_DB_
 kubectl create secret generic nptelboard-secrets \
   --from-literal=database-url='postgresql://nptelboard:YOUR_DB_PASSWORD@postgres:5432/nptelboard?schema=public' \
   --from-literal=admin-password='YOUR_ADMIN_PASSWORD' \
-  --from-literal=resend-api-key='YOUR_RESEND_KEY'
+  --from-literal=otp-secret='YOUR_RANDOM_64_HEX_CHAR_SECRET' \
+  --from-literal=turnstile-secret-key='YOUR_TURNSTILE_SECRET_KEY' \
+  --from-literal=resend-api-key='YOUR_RESEND_KEY' \
+  --from-literal=email-from='NPTELBoard <verified-sender@example.com>'
 kubectl apply -f k8s/postgres.yaml
 kubectl apply -f k8s/app.yaml
 ```
 
-The application container applies the Prisma schema and idempotent starter seed at startup. The NodePort service listens on `30080`; use your cluster's node address, or add an Ingress for a hostname and TLS.
+The application container applies committed Prisma migrations and the idempotent starter seed at startup. Build the image with the Cloudflare Turnstile **site key** as the `NEXT_PUBLIC_TURNSTILE_SITE_KEY` build argument (the GitHub workflow reads the `TURNSTILE_SITE_KEY` repository variable). The server secret belongs in the Kubernetes secret above. Set `YOUR_HOSTNAME` in `app.yaml`. The NodePort service listens on `30080`; use your cluster's node address, or add an Ingress for a hostname and TLS.

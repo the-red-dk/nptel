@@ -15,7 +15,10 @@ services:
       retries: 20
 
   app:
-    build: .
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:?Set NEXT_PUBLIC_TURNSTILE_SITE_KEY in .env}
     restart: unless-stopped
     depends_on:
       db:
@@ -25,5 +28,8 @@ services:
     environment:
       DATABASE_URL: postgresql://nptelboard:${POSTGRES_PASSWORD}@db:5432/nptelboard?schema=public
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
-      RESEND_API_KEY: ${RESEND_API_KEY:-}
-      EMAIL_FROM: "${EMAIL_FROM:-NPTELBoard <onboarding@resend.dev>}"
+      OTP_SECRET: ${OTP_SECRET:?Set OTP_SECRET in .env}
+      RESEND_API_KEY: ${RESEND_API_KEY:?Set RESEND_API_KEY in .env}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:?Set TURNSTILE_SECRET_KEY in .env}
+      EMAIL_FROM: "${EMAIL_FROM:?Set EMAIL_FROM to your verified sender in .env}"
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?Set NEXT_PUBLIC_SITE_URL in .env}

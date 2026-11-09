@@ -29,14 +29,28 @@ spec:
                 secretKeyRef:
                   name: nptelboard-secrets
                   key: admin-password
+            - name: OTP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nptelboard-secrets
+                  key: otp-secret
+            - name: TURNSTILE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nptelboard-secrets
+                  key: turnstile-secret-key
+            - name: NEXT_PUBLIC_SITE_URL
+              value: "https://YOUR_HOSTNAME"
             - name: RESEND_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: nptelboard-secrets
                   key: resend-api-key
-                  optional: true
             - name: EMAIL_FROM
-              value: "NPTELBoard <onboarding@resend.dev>"
+              valueFrom:
+                secretKeyRef:
+                  name: nptelboard-secrets
+                  key: email-from
           readinessProbe:
             httpGet:
               path: /api/courses

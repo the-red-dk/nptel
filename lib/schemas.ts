@@ -6,6 +6,6 @@ export const submissionSchema = z.object({
   purpose: z.enum(["LEARNING", "CREDITS"]).optional().nullable(), name: z.string().trim().min(2).max(100),
   email: z.string().trim().email().max(254), assignmentScore: z.coerce.number().min(0).max(CONFIG.assignmentMax),
   examScore: z.coerce.number().min(0).max(CONFIG.examMax), overallPercent: z.coerce.number().min(0).max(CONFIG.overallMax),
-  hasNumericals: z.coerce.boolean(), tier: z.enum(CONFIG.tiers).optional().nullable(), website: z.string().max(0).optional(),
+  hasNumericals: z.coerce.boolean(), tier: z.enum(CONFIG.tiers).optional().nullable(), website: z.string().max(0).optional(), turnstileToken: z.string().max(2048).optional(),
 }).refine(v => !CONFIG.semesterRequired || v.semester != null, { path: ["semester"], message: "Choose your semester" });
 export type SubmissionInput = z.infer<typeof submissionSchema>;

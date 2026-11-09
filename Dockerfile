@@ -1,4 +1,4 @@
-FROM node:20-bookworm-slim AS dependencies
+FROM node:22-bookworm-slim AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -6,14 +6,16 @@ RUN npm ci
 FROM dependencies AS build
 WORKDIR /app
 COPY . .
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
 ENV DATABASE_URL="postgresql://nptelboard:build-only@localhost:5432/nptelboard?schema=public"
 RUN npx prisma generate && npm run build
 
-FROM node:20-bookworm-slim AS runtime
+FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 COPY --from=build --chown=node:node /app ./
 USER node
 EXPOSE 3000
-CMD ["sh", "-c", "npx prisma db push && npm run db:seed && npm run start"]
+CMD ["sh", "-c", "npm run db:migrate:deploy && npm run db:seed && npm run start"]
