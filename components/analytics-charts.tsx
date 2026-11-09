@@ -1,0 +1,3 @@
+"use client";
+import { BarChart,Bar,XAxis,YAxis,Tooltip,ResponsiveContainer,CartesianGrid } from "recharts";
+export function Chart({data,xKey,yKey="count",color="#171717"}:{data:any[];xKey:string;yKey?:string;color?:string}){return <div className="h-56 w-full"><ResponsiveContainer><BarChart data={data} margin={{top:5,right:5,left:-18,bottom:5}}><CartesianGrid vertical={false} stroke="#e7e5e4"/><XAxis dataKey={xKey} tick={{fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fontSize:11}} axisLine={false} tickLine={false}/><Tooltip contentStyle={{border:"2px solid #171717",borderRadius:12}}/><Bar dataKey={yKey} fill={color} radius={[5,5,0,0]}/></BarChart></ResponsiveContainer></div>}
