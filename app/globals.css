@@ -1,6 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f4f3ef;color:#171717;font-family:var(--font-sans),sans-serif}button,input,select{font:inherit}button,a{-webkit-tap-highlight-color:transparent}::selection{background:#d8f27b;color:#171717}.font-mono{font-family:'DM Mono',monospace}
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f4f3ef;color:#171717;font-family:Inter,"Avenir Next",Arial,sans-serif}button,input,select{font:inherit}button,a{-webkit-tap-highlight-color:transparent}::selection{background:#d8f27b;color:#171717}.font-mono{font-family:"DM Mono",ui-monospace,monospace}.font-display{font-family:Syne,"Avenir Next",Arial,sans-serif}
 @layer components{.field{@apply w-full rounded-lg border border-neutral-300 bg-white px-3 py-3 outline-none transition focus:border-ink focus:ring-2 focus:ring-lime-300}.primary{@apply rounded-full border-2 border-ink bg-ink px-5 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50}.secondary{@apply rounded-full border-2 border-ink bg-white px-5 py-3 font-semibold text-ink transition hover:-translate-y-0.5 hover:bg-neutral-100}.pill{@apply rounded-full border border-neutral-300 px-4 py-2 text-sm transition hover:border-ink hover:bg-white}}

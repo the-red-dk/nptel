@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
   if (!otp) return NextResponse.json({ error: "Code expired. Please submit again." }, { status: 410 });
   if (otp.expiresAt < new Date()) { await db.otp.delete({ where: { id: otp.id } }); return NextResponse.json({ error: "Code expired. Please submit again." }, { status: 410 }); }
   if (otp.attempts >= 5) { await db.otp.delete({ where: { id: otp.id } }); return NextResponse.json({ error: "Too many attempts. Please submit again." }, { status: 429 }); }
+  if (otp.duplicateId && !parsed.data.action) return NextResponse.json({ error: "Choose how to handle your existing result." }, { status: 400 });
   const got = createHash("sha256").update(parsed.data.code).digest(), expected = Buffer.from(otp.codeHash, "hex");
   if (got.length !== expected.length || !timingSafeEqual(got, expected)) { await db.otp.update({ where: { id: otp.id }, data: { attempts: { increment: 1 } } }); return NextResponse.json({ error: `Incorrect code. ${4 - otp.attempts} attempts remaining.` }, { status: 400 }); }
   if (parsed.data.action === "CANCEL") { await db.otp.delete({ where: { id: otp.id } }); return NextResponse.json({ cancelled: true }); }

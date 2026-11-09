@@ -5,11 +5,28 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-enum CourseStatus { APPROVED PENDING }
-enum Session { JAN_APR JUL_OCT }
-enum Purpose { LEARNING CREDITS }
-enum Tier { ELITE SILVER GOLD TOPPER }
-enum DuplicateAction { OVERWRITE ANOTHER }
+enum CourseStatus {
+  APPROVED
+  PENDING
+}
+enum Session {
+  JAN_APR
+  JUL_OCT
+}
+enum Purpose {
+  LEARNING
+  CREDITS
+}
+enum Tier {
+  ELITE
+  SILVER
+  GOLD
+  TOPPER
+}
+enum DuplicateAction {
+  OVERWRITE
+  ANOTHER
+}
 model Course {
   id String @id @default(cuid())
   slug String @unique
