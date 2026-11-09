@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   if (otp.attempts >= 5) { await db.otp.delete({ where: { id: otp.id } }); return NextResponse.json({ error: "Too many attempts. Please submit again." }, { status: 429 }); }
   const got = createHash("sha256").update(parsed.data.code).digest(), expected = Buffer.from(otp.codeHash, "hex");
   if (got.length !== expected.length || !timingSafeEqual(got, expected)) { await db.otp.update({ where: { id: otp.id }, data: { attempts: { increment: 1 } } }); return NextResponse.json({ error: `Incorrect code. ${4 - otp.attempts} attempts remaining.` }, { status: 400 }); }
-  if (parsed.data.action === "CANCEL") { await db.otp.delete({ where: { id: otp.id } }); return NextResponse.json({ error: "Submission cancelled." }); }
+  if (parsed.data.action === "CANCEL") { await db.otp.delete({ where: { id: otp.id } }); return NextResponse.json({ cancelled: true }); }
   const data = submissionSchema.parse(otp.payload);
   const action = parsed.data.action;
   const result = await db.$transaction(async tx => {
