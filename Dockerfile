@@ -6,8 +6,6 @@ RUN npm ci
 FROM dependencies AS build
 WORKDIR /app
 COPY . .
-ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
-ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
 ENV DATABASE_URL="postgresql://nptelboard:build-only@localhost:5432/nptelboard?schema=public"
 RUN npx prisma generate && npm run build
 

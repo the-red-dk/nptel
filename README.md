@@ -26,10 +26,8 @@ Use a shared PostgreSQL service (such as Supabase or a managed PostgreSQL provid
 - `ADMIN_PASSWORD`: a unique random secret of at least 32 bytes.
 - `OTP_SECRET`: a different unique random secret of at least 32 bytes. This HMAC-protects OTPs and distributed rate-limit keys.
 - `RESEND_API_KEY` and `EMAIL_FROM`: Resend credentials and a verified sender address.
-- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`: Cloudflare Turnstile keys. The site key is build-time for Docker/Next.js and the secret key is server-only.
-- `NEXT_PUBLIC_SITE_URL`: the exact public HTTPS origin, such as `https://nptelboard.example.com`.
 
-Production submissions fail closed if Turnstile or email delivery is not configured. Configure HTTPS at the platform or ingress. Production responses include CSP, frame protections, HSTS, and related security headers.
+Submissions require email verification and are rate-limited by IP and email. Configure HTTPS at the platform or ingress. Production responses include CSP, frame protections, HSTS, and related security headers.
 
 ## Database migrations and catalog
 
@@ -37,7 +35,7 @@ Production submissions fail closed if Turnstile or email delivery is not configu
 
 ## Docker Compose
 
-Copy `.env.compose.example` to `.env.compose`. Generate distinct random hex values for the Postgres password, `ADMIN_PASSWORD`, and `OTP_SECRET`; set Resend credentials, a verified `EMAIL_FROM`, the Turnstile site/secret keys, and the public HTTPS URL. Then run:
+Copy `.env.compose.example` to `.env.compose`. Generate distinct random hex values for the Postgres password, `ADMIN_PASSWORD`, and `OTP_SECRET`; set Resend credentials and a verified `EMAIL_FROM`. Then run:
 
 ```sh
 docker compose --env-file .env.compose up --build
@@ -47,12 +45,12 @@ The app listens on the configured `APP_PORT` (3000 by default). Stop with `docke
 
 ## DevOps files
 
-- GitHub Actions (`.github/workflows/ci.yml`) checks types/tests/builds on pull requests and publishes a GHCR image on `main`. Set the repository variable `TURNSTILE_SITE_KEY`; store credentials and deploy-only secrets in GitHub/host secrets.
+- GitHub Actions (`.github/workflows/ci.yml`) checks types/tests/builds on pull requests and publishes a GHCR image on `main`; store credentials and deploy-only secrets in GitHub/host secrets.
 - `Jenkinsfile` runs checkout, install, checks, tests, build, and a Docker image build on `main`. Its agent needs Node.js 22, Docker, and the Workspace Cleanup plugin.
 - `ansible/deploy.yml` configures an Ubuntu Docker host and deploys with Compose. Install `community.docker`; provide the repo URL and credentials through Ansible Vault or extra vars.
-- `k8s/` contains PostgreSQL storage/service/deployment and the app deployment/service. Follow `k8s/README.md`; create secrets outside Git and build the image with the Turnstile site key.
+- `k8s/` contains PostgreSQL storage/service/deployment and the app deployment/service. Follow `k8s/README.md`; create secrets outside Git.
 
-For a shared public site, the simplest hosted route is Vercel + managed PostgreSQL (for example Supabase). Create the database, run `npm run db:migrate:deploy` against its URL, set the production environment variables above, and connect the GitHub repository to Vercel. Alternatively, the Compose/Ansible/Kubernetes path runs the whole stack on your own host. These are deployment configurations; a public launch still needs a GitHub remote, a configured CI runner, and a host/cluster plus domain. No public deployment has been created from this workspace.
+For a shared public site, the simplest hosted route is Vercel + managed PostgreSQL (for example Supabase). Create the database, run `npm run db:migrate:deploy` against its URL, set the production environment variables above, and connect the GitHub repository to Vercel. Alternatively, the Compose/Ansible/Kubernetes path runs the whole stack on your own host.
 
 ## NPTEL score bands
 
@@ -64,4 +62,4 @@ Public endpoints return course aggregates, never individual submissions. Duplica
 
 ## Checks
 
-Run `npx tsc --noEmit`, `npm test`, and `npm audit`. Database-backed verification needs `DATABASE_URL`; a real production submission also needs Resend and Turnstile credentials. The repository does not yet contain a full browser end-to-end test for the email delivery flow.
+Run `npx tsc --noEmit`, `npm test`, and `npm audit`. Database-backed verification needs `DATABASE_URL`; a real production submission also needs Resend credentials. The repository does not yet contain a full browser end-to-end test for the email delivery flow.
