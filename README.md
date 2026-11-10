@@ -45,7 +45,7 @@ The app listens on the configured `APP_PORT` (3000 by default). Stop with `docke
 ## DevOps files
 
 - GitHub Actions (`.github/workflows/ci.yml`) checks types/tests/builds on pull requests and publishes a GHCR image on `main`; store credentials and deploy-only secrets in GitHub/host secrets.
-- `Jenkinsfile` runs checkout, install, checks, tests, build, and a Docker image build on `main`. Its agent needs Node.js 22, Docker, and the Workspace Cleanup plugin.
+- `Jenkinsfile` runs checkout, install, checks, tests, build, and a Docker image build on `master`. It needs a running Jenkins controller, an agent with Node.js 22 and Docker, and the Workspace Cleanup plugin.
 - `ansible/deploy.yml` configures an Ubuntu Docker host and deploys with Compose. Install `community.docker`; provide the repo URL and credentials through Ansible Vault or extra vars.
 - `k8s/` contains PostgreSQL storage/service/deployment and the app deployment/service. Follow `k8s/README.md`; create secrets outside Git.
 
