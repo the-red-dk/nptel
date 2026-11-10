@@ -14,8 +14,8 @@ export async function hit(key: string, limit: number, windowMs: number) {
     return true;
   }
 
-  const secret = process.env.OTP_SECRET;
-  if (!secret || Buffer.byteLength(secret) < 32) throw new Error("OTP_SECRET must be at least 32 bytes for production rate limiting");
+  const secret = process.env.RATE_LIMIT_SECRET;
+  if (!secret || Buffer.byteLength(secret) < 32) throw new Error("RATE_LIMIT_SECRET must be at least 32 bytes for production rate limiting");
   const keyHash = createHmac("sha256", secret).update(key).digest("hex");
   const rows = await db.$queryRaw<Array<{ count: number }>>`
     INSERT INTO "RateLimitBucket" ("keyHash", "count", "windowExpiresAt", "updatedAt")

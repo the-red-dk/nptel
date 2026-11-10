@@ -17,9 +17,6 @@ export const CONFIG = {
   lowSampleThreshold: 10,
   purposeSampleThreshold: 10,
   passRateMinEntries: 10,
-  otpMinutes: 10,
-  otpMaxAttempts: 5,
-  otpCooldownSeconds: 30,
 } as const;
 
 export function passed(assignmentScore: number, examScore: number) {

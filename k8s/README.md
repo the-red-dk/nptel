@@ -7,9 +7,7 @@ kubectl create secret generic postgres-secrets --from-literal=password='YOUR_DB_
 kubectl create secret generic nptelboard-secrets \
   --from-literal=database-url='postgresql://nptelboard:YOUR_DB_PASSWORD@postgres:5432/nptelboard?schema=public' \
   --from-literal=admin-password='YOUR_ADMIN_PASSWORD' \
-  --from-literal=otp-secret='YOUR_RANDOM_64_HEX_CHAR_SECRET' \
-  --from-literal=resend-api-key='YOUR_RESEND_KEY' \
-  --from-literal=email-from='NPTELBoard <verified-sender@example.com>'
+  --from-literal=rate-limit-secret='YOUR_RANDOM_64_HEX_CHAR_SECRET'
 kubectl apply -f k8s/postgres.yaml
 kubectl apply -f k8s/app.yaml
 ```

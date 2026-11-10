@@ -25,6 +25,4 @@ services:
     environment:
       DATABASE_URL: postgresql://nptelboard:${POSTGRES_PASSWORD}@db:5432/nptelboard?schema=public
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
-      OTP_SECRET: ${OTP_SECRET:?Set OTP_SECRET in .env}
-      RESEND_API_KEY: ${RESEND_API_KEY:?Set RESEND_API_KEY in .env}
-      EMAIL_FROM: "${EMAIL_FROM:?Set EMAIL_FROM to your verified sender in .env}"
+      RATE_LIMIT_SECRET: ${RATE_LIMIT_SECRET:?Set RATE_LIMIT_SECRET in .env}

@@ -1,10 +1,10 @@
 # NPTELBoard
 
-Public course search and anonymous aggregate NPTEL course statistics, with private email-verified result submissions.
+Public course search and anonymous aggregate NPTEL course statistics, with private, unverified result submissions.
 
 ## Local development
 
-Requirements: Node.js 22+, npm, and PostgreSQL 14+. Copy `.env.example` to `.env`, set `DATABASE_URL`, then generate separate random secrets for `ADMIN_PASSWORD` and `OTP_SECRET` (each at least 32 bytes). For example, `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Set the secrets locally; do not commit `.env`.
+Requirements: Node.js 22+, npm, and PostgreSQL 14+. Copy `.env.example` to `.env`, set `DATABASE_URL`, then generate separate random secrets for `ADMIN_PASSWORD` and `RATE_LIMIT_SECRET` (each at least 32 bytes). For example, `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Set the secrets locally; do not commit `.env`.
 
 ```sh
 npm ci
@@ -14,7 +14,7 @@ npm run db:seed
 npm run dev
 ```
 
-Open `http://localhost:3000`. For Prisma's local development database, append `pgbouncer=true` to the connection URL. The development OTP is printed to the server console when `RESEND_API_KEY` is not set.
+Open `http://localhost:3000`. For Prisma's local development database, append `pgbouncer=true` to the connection URL.
 
 The dev launcher uses a separate `.next-dev-<port>` directory for each server. Stop an existing process with Ctrl+C before restarting on its port; `npm run dev -- --port 3001` starts on 3001.
 
@@ -24,18 +24,17 @@ Use a shared PostgreSQL service (such as Supabase or a managed PostgreSQL provid
 
 - `DATABASE_URL`: production PostgreSQL connection string. Use the provider's transaction-pooling URL with `pgbouncer=true` if required by the provider.
 - `ADMIN_PASSWORD`: a unique random secret of at least 32 bytes.
-- `OTP_SECRET`: a different unique random secret of at least 32 bytes. This HMAC-protects OTPs and distributed rate-limit keys.
-- `RESEND_API_KEY` and `EMAIL_FROM`: Resend credentials and a verified sender address.
+- `RATE_LIMIT_SECRET`: a different unique random secret of at least 32 bytes. This HMAC-protects distributed rate-limit keys.
 
-Submissions require email verification and are rate-limited by IP and email. Configure HTTPS at the platform or ingress. Production responses include CSP, frame protections, HSTS, and related security headers.
+Submissions are saved immediately without email verification and rate-limited by IP and email. Email addresses are kept private, used for attempt grouping, and are not verified. Configure HTTPS at the platform or ingress. Production responses include CSP, frame protections, HSTS, and related security headers.
 
 ## Database migrations and catalog
 
-`prisma/schema.prisma` defines courses, submissions, email OTP challenges, course requests, and shared rate-limit buckets. Local development can use `npm run db:push`; deployments use committed migrations via `npm run db:migrate:deploy`. The container applies migrations and runs the idempotent seed before starting the app. `data/nptel_courses.csv` is a small starter catalog; replace or bulk-import the full approved catalog before inviting users.
+`prisma/schema.prisma` defines courses, submissions, course requests, and shared rate-limit buckets. Local development can use `npm run db:push`; deployments use committed migrations via `npm run db:migrate:deploy`. The container applies migrations and runs the idempotent seed before starting the app. `data/nptel_courses.csv` is a small starter catalog; replace or bulk-import the full approved catalog before inviting users.
 
 ## Docker Compose
 
-Copy `.env.compose.example` to `.env.compose`. Generate distinct random hex values for the Postgres password, `ADMIN_PASSWORD`, and `OTP_SECRET`; set Resend credentials and a verified `EMAIL_FROM`. Then run:
+Copy `.env.compose.example` to `.env.compose`. Generate distinct random hex values for the Postgres password, `ADMIN_PASSWORD`, and `RATE_LIMIT_SECRET`. Then run:
 
 ```sh
 docker compose --env-file .env.compose up --build
@@ -58,8 +57,8 @@ For most courses, assignment ≥10/25 and exam ≥30/75 are required to pass. Ce
 
 ## Security and privacy
 
-Public endpoints return course aggregates, never individual submissions. Duplicate comparisons are returned only after email OTP verification. OTPs are HMAC-protected, short-lived, limited to five attempts, and resend is throttled. Production IP/email limits are shared through PostgreSQL; local development uses an in-memory limiter. Admin routes require a timing-safe password check and an HTTP-only, Secure-in-production, SameSite cookie; login attempts are throttled. Public POST bodies are size-limited. Names and emails are not selected by public pages; admin moderation returns names but not emails.
+Public endpoints return course aggregates, never individual submissions. The email entered on a submission is not verified; it is stored privately for grouping attempts and can be entered falsely. Production IP/email limits are shared through PostgreSQL; local development uses an in-memory limiter. Admin routes require a timing-safe password check and an HTTP-only, Secure-in-production, SameSite cookie; login attempts are throttled. Public POST bodies are size-limited. Names and emails are not selected by public pages; admin moderation returns names but not emails.
 
 ## Checks
 
-Run `npx tsc --noEmit`, `npm test`, and `npm audit`. Database-backed verification needs `DATABASE_URL`; a real production submission also needs Resend credentials. The repository does not yet contain a full browser end-to-end test for the email delivery flow.
+Run `npx tsc --noEmit`, `npm test`, and `npm audit`. Database-backed verification needs `DATABASE_URL`. The repository does not yet contain a full browser end-to-end test for submissions.
