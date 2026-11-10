@@ -47,6 +47,7 @@ The app listens on the configured `APP_PORT` (3000 by default). Stop with `docke
 - GitHub Actions (`.github/workflows/ci.yml`) checks types/tests/builds on pull requests and publishes a GHCR image on `main`; store credentials and deploy-only secrets in GitHub/host secrets.
 - `Jenkinsfile` runs checkout, install, checks, tests, build, and a Docker image build on `master`. It needs a running Jenkins controller, an agent with Node.js 22 and Docker, and the Workspace Cleanup plugin.
 - `ansible/deploy.yml` configures an Ubuntu Docker host and deploys with Compose. Install `community.docker`; provide the repo URL and credentials through Ansible Vault or extra vars.
+- `ansible/local.yml` runs the Compose stack on the local machine. From WSL Ubuntu, install Ansible and the `community.docker` collection, copy `.env.compose.example` to `.env.compose`, fill in local-only secrets, then run `ansible-playbook ansible/local.yml`. Docker Desktop WSL integration must be enabled for Ubuntu.
 - `k8s/` contains PostgreSQL storage/service/deployment and the app deployment/service. Follow `k8s/README.md`; create secrets outside Git.
 
 For a shared public site, the simplest hosted route is Vercel + managed PostgreSQL (for example Supabase). Create the database, run `npm run db:migrate:deploy` against its URL, set the production environment variables above, and connect the GitHub repository to Vercel. Alternatively, the Compose/Ansible/Kubernetes path runs the whole stack on your own host.

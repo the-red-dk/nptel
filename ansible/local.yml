@@ -1,0 +1,31 @@
+---
+- name: Run NPTELBoard locally with Docker Compose
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    project_directory: "{{ playbook_dir }}/.."
+  tasks:
+    - name: Check for the local Compose secrets file
+      ansible.builtin.stat:
+        path: "{{ project_directory }}/.env.compose"
+      register: compose_env_file
+
+    - name: Require the local Compose secrets file
+      ansible.builtin.assert:
+        that:
+          - compose_env_file.stat.exists
+        fail_msg: >-
+          Create .env.compose from .env.compose.example and fill in local secrets
+          before running this playbook.
+
+    - name: Build and start the local application stack
+      community.docker.docker_compose_v2:
+        project_src: "{{ project_directory }}"
+        env_files:
+          - .env.compose
+        state: present
+        build: always
+        pull: missing
+        wait: true
+        wait_timeout: 180
