@@ -32,15 +32,67 @@ Submissions are saved immediately without email verification and rate-limited by
 
 `prisma/schema.prisma` defines courses, submissions, course requests, and shared rate-limit buckets. Local development can use `npm run db:push`; deployments use committed migrations via `npm run db:migrate:deploy`. The container applies migrations and runs the idempotent seed before starting the app. `data/nptel_courses.csv` is a small starter catalog; replace or bulk-import the full approved catalog before inviting users.
 
-## Docker Compose
+## Install and run locally with Docker
 
-Copy `.env.compose.example` to `.env.compose`. Generate distinct random hex values for the Postgres password, `ADMIN_PASSWORD`, and `RATE_LIMIT_SECRET`. Then run:
+This is the recommended way to try NPTELBoard. It runs the website and PostgreSQL on your computer; it does not publish the site to the internet.
+
+### Requirements
+
+- Docker Desktop on Windows or macOS, with Docker Compose enabled, or Docker Engine with the Compose plugin on Linux.
+- Git.
+
+Check Docker Compose is available:
+
+```sh
+docker compose version
+```
+
+### Setup
+
+Clone the repository and enter its folder:
+
+```sh
+git clone https://github.com/the-red-dk/nptel.git
+cd nptel
+```
+
+Copy the example environment file. On macOS/Linux/WSL:
+
+```sh
+cp .env.compose.example .env.compose
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.compose.example .env.compose
+```
+
+Open `.env.compose` in a text editor. Replace the placeholder values for `POSTGRES_PASSWORD`, `ADMIN_PASSWORD`, and `RATE_LIMIT_SECRET` with three different, randomly generated 64-character hexadecimal secrets. Keep `APP_PORT=3000` unless that port is already in use. Do not share or commit `.env.compose`; it contains private local credentials.
+
+From the repository folder, build and start the app and database:
 
 ```sh
 docker compose --env-file .env.compose up --build
 ```
 
-The app listens on the configured `APP_PORT` (3000 by default). Stop with `docker compose --env-file .env.compose down`. Add `-v` only if you intend to erase the database volume.
+When startup finishes, open [http://localhost:3000](http://localhost:3000). Keep the terminal running while using the app. To stop the containers, press Ctrl+C, then run:
+
+```sh
+docker compose --env-file .env.compose down
+```
+
+The database is retained when you stop the containers. To delete the database and all its data as well, run `docker compose --env-file .env.compose down -v` instead.
+
+### Start it again later
+
+From the repository folder, run:
+
+```sh
+docker compose --env-file .env.compose up -d
+```
+
+Then open [http://localhost:3000](http://localhost:3000). Stop it with `docker compose --env-file .env.compose down`.
 
 ## DevOps files
 
