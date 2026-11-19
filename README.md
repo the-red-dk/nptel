@@ -30,79 +30,13 @@ Submissions are saved immediately without email verification and rate-limited by
 
 ## Database migrations and catalog
 
-`prisma/schema.prisma` defines courses, submissions, course requests, and shared rate-limit buckets. Local development can use `npm run db:push`; deployments use committed migrations via `npm run db:migrate:deploy`. The container applies migrations and runs the idempotent seed before starting the app. `data/nptel_courses.csv` is a small starter catalog; replace or bulk-import the full approved catalog before inviting users.
+`prisma/schema.prisma` defines courses, submissions, course requests, and shared rate-limit buckets. Local development can use `npm run db:push`; deployments use committed migrations via `npm run db:migrate:deploy`. The GitHub Actions database initializer can run migrations and seed the catalog using the configured `DATABASE_URL` secret. `data/nptel_courses.csv` is a small starter catalog; replace or bulk-import the full approved catalog before inviting users.
 
-## Install and run locally with Docker
+## GitHub Actions
 
-This is the recommended way to try NPTELBoard. It runs the website and PostgreSQL on your computer; it does not publish the site to the internet.
+The workflow in `.github/workflows/ci.yml` checks types, tests, and builds the app on pull requests and pushes to `main`. The manually triggered database initializer is in `.github/workflows/initialize-database.yml` and requires a `DATABASE_URL` repository secret.
 
-### Requirements
-
-- Docker Desktop on Windows or macOS, with Docker Compose enabled, or Docker Engine with the Compose plugin on Linux.
-- Git.
-
-Check Docker Compose is available:
-
-```sh
-docker compose version
-```
-
-### Setup
-
-Clone the repository and enter its folder:
-
-```sh
-git clone https://github.com/the-red-dk/nptel.git
-cd nptel
-```
-
-Copy the example environment file. On macOS/Linux/WSL:
-
-```sh
-cp .env.compose.example .env.compose
-```
-
-On Windows PowerShell:
-
-```powershell
-Copy-Item .env.compose.example .env.compose
-```
-
-Open `.env.compose` in a text editor. Replace the placeholder values for `POSTGRES_PASSWORD`, `ADMIN_PASSWORD`, and `RATE_LIMIT_SECRET` with three different, randomly generated 64-character hexadecimal secrets. Keep `APP_PORT=3000` unless that port is already in use. Do not share or commit `.env.compose`; it contains private local credentials.
-
-From the repository folder, build and start the app and database:
-
-```sh
-docker compose --env-file .env.compose up --build
-```
-
-When startup finishes, open [http://localhost:3000](http://localhost:3000). Keep the terminal running while using the app. To stop the containers, press Ctrl+C, then run:
-
-```sh
-docker compose --env-file .env.compose down
-```
-
-The database is retained when you stop the containers. To delete the database and all its data as well, run `docker compose --env-file .env.compose down -v` instead.
-
-### Start it again later
-
-From the repository folder, run:
-
-```sh
-docker compose --env-file .env.compose up -d
-```
-
-Then open [http://localhost:3000](http://localhost:3000). Stop it with `docker compose --env-file .env.compose down`.
-
-## DevOps files
-
-- GitHub Actions (`.github/workflows/ci.yml`) checks types/tests/builds on pull requests and publishes a GHCR image on `main`; store credentials and deploy-only secrets in GitHub/host secrets.
-- `Jenkinsfile` runs checkout, install, checks, tests, build, and a Docker image build on `master`. It needs a running Jenkins controller, an agent with Node.js 22 and Docker, and the Workspace Cleanup plugin.
-- `ansible/deploy.yml` configures an Ubuntu Docker host and deploys with Compose. Install `community.docker`; provide the repo URL and credentials through Ansible Vault or extra vars.
-- `ansible/local.yml` runs the Compose stack on the local machine. From WSL Ubuntu, install Ansible and the `community.docker` collection, copy `.env.compose.example` to `.env.compose`, fill in local-only secrets, then run `ansible-playbook ansible/local.yml`. Docker Desktop WSL integration must be enabled for Ubuntu.
-- `k8s/` contains PostgreSQL storage/service/deployment and the app deployment/service. Follow `k8s/README.md`; create secrets outside Git.
-
-For a shared public site, the simplest hosted route is Vercel + managed PostgreSQL (for example Supabase). Create the database, run `npm run db:migrate:deploy` against its URL, set the production environment variables above, and connect the GitHub repository to Vercel. Alternatively, the Compose/Ansible/Kubernetes path runs the whole stack on your own host.
+For a shared public site, use Vercel with a managed PostgreSQL database such as Supabase. Run `npm run db:migrate:deploy` against the database, set the production environment variables above, and connect the GitHub repository to Vercel.
 
 ## NPTEL score bands
 
